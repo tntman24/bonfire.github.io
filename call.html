@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Group Call</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Jitsi WebRTC API -->
+  <script src="https://meet.jit.si/external_api.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #050505;
+      color: #f5f5f5;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    .wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .top-bar {
+      padding: 8px 12px;
+      background: #111;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .top-bar input {
+      flex: 0 0 160px;
+      max-width: 220px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #222;
+      color: #f5f5f5;
+    }
+
+    .top-bar button {
+      padding: 7px 12px;
+      border-radius: 4px;
+      border: none;
+      background: #2d7dff;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .top-bar button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    .top-bar .status {
+      margin-left: auto;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    #jitsi-container {
+      flex: 1;
+      min-height: 0;
+    }
+
+    @media (max-width: 600px) {
+      .top-bar {
+        flex-wrap: wrap;
+      }
+      .top-bar input {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="top-bar">
+      <span>Display name:</span>
+      <input id="displayName" type="text" placeholder="Your name" />
+      <button id="joinBtn">Join Call</button>
+      <div class="status" id="statusText">Not connected</div>
+    </div>
+    <div id="jitsi-container"></div>
+  </div>
+
+  <script>
+    // ---- CONFIG ----
+    // Everyone who opens this page joins this exact room name:
+    const ROOM_NAME = "MyNeocitiesGroupCallRoom_001"; // change this if you like
+
+    const domain = "meet.jit.si";
+    const joinBtn = document.getElementById("joinBtn");
+    const nameInput = document.getElementById("displayName");
+    const statusText = document.getElementById("statusText");
+    const container = document.getElementById("jitsi-container");
+
+    let api = null;
+
+    function joinCall() {
+      if (api) return; // already in call
+
+      const displayName = nameInput.value.trim() || "Guest";
+
+      statusText.textContent = "Connecting…";
+      joinBtn.disabled = true;
+
+      const options = {
+        roomName: ROOM_NAME,
+        width: "100%",
+        height: "100%",
+        parentNode: container,
+        userInfo: {
+          displayName
+        },
+        configOverwrite: {
+          // you can tweak Jitsi behavior here if needed
+        },
+        interfaceConfigOverwrite: {
+          // hide Jitsi branding if you want:
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false
+        }
+      };
+
+      api = new JitsiMeetExternalAPI(domain, options);
+
+      api.addEventListener("videoConferenceJoined", () => {
+        statusText.textContent = "Connected";
+      });
+
+      api.addEventListener("readyToClose", () => {
+        statusText.textContent = "Call ended";
+        api = null;
+        joinBtn.disabled = false;
+      });
+    }
+
+    joinBtn.addEventListener("click", joinCall);
+
+    // Optional: auto-join when page loads
+    // window.addEventListener("load", joinCall);
+  </script>
+</body>
+</html>

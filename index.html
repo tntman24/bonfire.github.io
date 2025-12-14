@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bonfire</title>
+    <link href="News/news.css" rel="stylesheet" type="text/css" media="all">
+    <!--<script src="/passwords.js"></script>-->
+  </head>
+  <body>
+<div class="container">
+  <div class="text-wrapper">
+    <h1>Bonfire</h1>
+    <h2>Beta</h2>
+  </div>
+  <img src="/bonfireIcon.png" alt="A Black, cartoon fire" class="bonfireLogo">
+</div>
+<center>
+<h1>Welcome to the Bonfire Beta!</h1>
+<a href="https://bonfire-chat.neocities.org/test.html"><button>Enter The Chat!</button></a>
+<a href="https://bonfire-chat.neocities.org/auth.html"><button>Log into Bonfire!</button></a>
+<!-- Changed the link to be a full URL so it works reliably -->
+<!--<a href="https://bonfire.github.io" id="githubLink"><button>Click me to go to Github!</button></a> -->
+</center>
+
+<script>
+const currentURL = window.location.href;
+
+if (currentURL.includes('github.io')) {
+    document.getElementById('githubLink').style.display = "none";
+} else {
+  document.getElementById('githubLink').style.display = "block";
+}
+
+
+</script>
+</body>
+</html>

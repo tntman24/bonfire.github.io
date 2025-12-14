@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+
+  <body>
+    <h2>Role Selection</h2>
+
+    <label for="uuid">UUID:</label>
+    <input id="uuid" type="text" readonly />
+
+    <button id="submitBtn">CLICK TO SET PASSWORD</button>
+
+    <br><br>
+
+    <a href="test.html"><button>Enter Chat</button></a>
+    <script>
+      // Supabase
+      const supabaseUrl = "https://cjctbzgebedmhylmhmuj.supabase.co";
+      const supabaseKey =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqY3RiemdlYmVkbWh5bG1obXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyMjA2MDAsImV4cCI6MjA4MDc5NjYwMH0.XetU-QXEKxIFruX5_HrdRH1AhXKtQpkhrtYNrOS37Qc";
+
+      const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+      // Pull UUID from query OR localStorage
+      const urlParams = new URLSearchParams(window.location.search);
+      const uuidFromForm = urlParams.get("password");
+      const savedUUID = localStorage.getItem("uuid");
+
+      const finalUUID = uuidFromForm || savedUUID;
+      document.getElementById("uuid").value = finalUUID || "";
+
+      // If we autologged in, lookup immediately
+      if (finalUUID) {
+        document.getElementById("submitBtn").click();
+      }
+
+
+      // Lookup UUID in Supabase
+      document.getElementById("submitBtn").addEventListener("click", async () => {
+        const uuid = document.getElementById("uuid").value.trim();
+        if (!uuid) return alert("Enter UUID");
+
+        const { data, error } = await supabaseClient
+          .from("profiles")
+          .select("BonID, role")
+          .eq("BonID", uuid)
+          .maybeSingle();
+
+        if (error) return alert("Database error (check console)");
+      });
+    </script>
+  </body>
+</html>

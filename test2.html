@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Simple Chat</title>
+    <!-- Supabase JS client from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="/specialRankColors.js"></script>
+    <script src="/serverCommands.js"></script>
+
+    <!-- <script src='/passwords.js'></script> -->
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/CSS/chat.css">
+  </head>
+  <body>
+    <!-- Username section -->
+    <div class="username">
+      <label for="username">Username:</label>
+      <input id="username" type="text" placeholder="Enter your username">
+      <br>
+      <a href="auth.html"><button>Log into Bonfire with UUID</button></a>
+      <a href="roles.html"><button>Select Role</button></a>
+      <br>
+      <a href="https://bonfire-chat.neocities.org/News/news"><button class="annouce">NEW UPDATE TO BONFIRE | CLICK ME TO LEARN MORE!</button></a>
+
+    </div>
+     
+    <!-- Messages will appear here -->
+    <div class="messages" id="messages"></div>
+
+    <center>
+      <input
+        class="messageBox"
+        id="message"
+        type="text"
+        placeholder="Type a message | Press Enter to Send"
+      >
+      <button class="sendButton" id="send">Send</button>
+    </center>
+
+    <script>
+      // -------- Room selection from URL --------
+      const urlParams = new URLSearchParams(window.location.search);
+      const room = urlParams.get("room") || "main"; // default room is now "main"
+
+
+      // Optional: show room in tab title
+      document.title = `Simple Chat - ${room}`;
+
+      // 1. Connect to Supabase
+      const supabaseUrl = "https://cjctbzgebedmhylmhmuj.supabase.co";
+      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqY3RiemdlYmVkbWh5bG1obXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyMjA2MDAsImV4cCI6MjA4MDc5NjYwMH0.XetU-QXEKxIFruX5_HrdRH1AhXKtQpkhrtYNrOS37Qc";
+      const { createClient } = supabase;
+      const client = createClient(supabaseUrl, supabaseKey);
+
+      // 2. Get references to HTML elements
+      const usernameInput = document.getElementById("username");
+      const messageInput = document.getElementById("message");
+      const sendButton = document.getElementById("send");
+      const messagesDiv = document.getElementById("messages");
+
+      // 3. Helper: get current username
+      function getUsername() {
+        return usernameInput.value.trim() || "Anonymous";
+      }
+
+      // 4. Display a message object in the messagesDiv
+      function appendMessage(msg) {
+        // Normal chat message
+        if (!msg.serverCommand) {
+          const p = document.createElement("p");
+
+          const time = msg.created_at ? new Date(msg.created_at) : new Date();
+          const timeString = time.toLocaleTimeString();
+
+          const rankTag = msg.rank ? ` [${msg.rank}]` : "";
+
+          p.textContent = `[${timeString}] ${msg.username}${rankTag}: ${msg.message}`;
+          
+          // Simple rank colors (you also have specialRankColors.js if you want to centralize this)
+          if (msg.rank === "Owner") {
+            p.style.color = "#ebb736";
+          } else if (msg.rank === "PATRIOT") {
+            p.style.color = "blue";
+          } else if (msg.rank === "Lead Developer") {
+            p.style.color = "#4a9905";
+          } else if (msg.rank === "Head Moderator") {
+            p.style.color = "#8928f7";
+          }
+
+          messagesDiv.appendChild(p);
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        } else {
+          // Server command message
+          const serverCommand = msg.serverCommandRan;
+          if (typeof serverCommand === "function") {
+            serverCommand();
+          }
+        }
+      }
+
+      // 5. Load existing messages from the database (history) for THIS room only
+      async function loadMessages() {
+        const result = await client
+          .from("messages")
+          .select("*")
+          .eq("room", room)          // <-- filter by room
+          .order("created_at", { ascending: true });
+
+        if (result.error) {
+          console.error("Error loading messages:", result.error);
+          return;
+        }
+
+        messagesDiv.innerHTML = "";
+        result.data.forEach(appendMessage);
+      }
+
+      // 6. Send a new message (tagged with this room)
+      async function sendMessage() {
+        const username = getUsername();
+        const text = messageInput.value.trim();
+
+        if (username.length >= 20) {
+          alert("User username is over 20 characters, please change it");
+          return;
+        }
+        if (username === "Anonymous") {
+          alert("Please enter a username first.");
+          return;
+        }
+        if (!text) {
+          return;
+        }
+
+        const rank = localStorage.getItem("role") || null;
+
+        const result = await client
+          .from("messages")
+          .insert({
+            username: username,
+            message: text,
+            rank: rank,
+            room: room // <-- store room in DB
+          });
+
+        if (result.error) {
+          console.error("Error sending message:", result.error);
+          return;
+        }
+
+        messageInput.value = "";
+      }
+
+      // 7. Save username automatically using the input event
+      usernameInput.addEventListener("input", function () {
+        localStorage.setItem("chat_username", usernameInput.value.trim());
+      });
+
+      // 8. Send message when clicking the button or pressing Enter
+      sendButton.addEventListener("click", sendMessage);
+
+      messageInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      });
+
+      // 9. Load saved username if it exists
+      const storedName = localStorage.getItem("chat_username");
+      if (storedName) {
+        usernameInput.value = storedName;
+      }
+
+      // 10. Load existing messages once when the page loads
+      loadMessages();
+
+      // 11. Subscribe to realtime inserts on the messages table, filtered by room
+      client
+        .channel("public:messages")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+            filter: `room=eq.${room}`   // <-- only this room's inserts
+          },
+          function (payload) {
+            appendMessage(payload.new);
+          }
+        )
+        .subscribe();
+        
+      // ---------- Unread Messages Counter ----------
+      const originalTitle = document.title; // store the page title
+      let unreadCount = 0;
+
+      function updateTitle() {
+        if (unreadCount > 0) {
+          document.title = `(${unreadCount}) ${originalTitle}`;
+        } else {
+          document.title = originalTitle;
+        }
+      }
+
+      // Reset unread messages when the page is visible
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          unreadCount = 0;
+          updateTitle();
+        }
+      });
+
+      // Wrap appendMessage to track unread messages
+      const originalAppendMessage = appendMessage;
+      appendMessage = function (msg) {
+        originalAppendMessage(msg);
+
+        if (document.hidden) {
+          unreadCount++;
+          updateTitle();
+        }
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Login</title>
+  </head>
+
+  <body>
+    <h2>Sign In</h2>
+    <form id="loginForm" action="roles2.html" method="GET">
+      <!-- Chrome recognizes "password" field and auto-saves it -->
+      <label for="uuid">Password:</label>
+      <input 
+        id="uuid" 
+        name="password" 
+        type="password" 
+        required
+        autocomplete="current-password"
+      />
+
+      <br><br>
+
+      <!-- Submit causes Chrome's save-password popup -->
+      <button type="submit">Sign In</button>
+      
+    </form>
+          <a href="auth"><button>Or log in with UUID</button></a>
+
+
+  <script>
+    document.getElementById('
+      document.getElementById("loginForm").addEventListener("submit", () => {
+        const uuid = document.getElementById("uuid").value.trim();
+        localStorage.setItem("uuid", uuid);
+      });
+    </script>
+  </body>
+</html>
