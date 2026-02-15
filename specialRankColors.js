@@ -1,12 +1,6 @@
-/*var specialRankNames = ['Owner', 'Lead Dev', 'Lead Moderator'];
-var specialRankColors = ['#f2564b','#599943','#5083c7'];
-var rankNameColor = 0;
-function loadRankColor() {
-  if (specialRankNames.includes(msg.rank)) {
-    var rankNameNumber = specialRankNames.indexOf(msg.rank);
-    var rankNameColor = '$specialRankColors[rankNameNumber]';
-  } else {
-    rankNameColor = '#ffffff';
+export function rankColors() {
+  if (msg.rank === "Owner") p.style.color = "#ebb736";
+          else if (msg.rank === "PATRIOT") p.style.color = "blue";
+          else if (msg.rank === "Lead Developer") p.style.color = "#4a9905";
+          else if (msg.rank === "Head Moderator") p.style.color = "#8928f7";
 }
-}
-*/
